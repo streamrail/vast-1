@@ -460,8 +460,8 @@ type Tracking struct {
 	Event string `xml:"event,attr"`
 	// The time during the video at which this url should be pinged. Must be present for
 	// progress event. Must match (\d{2}:[0-5]\d:[0-5]\d(\.\d\d\d)?|1?\d?\d(\.?\d)*%)
-	Offset *Offset `xml:"offset,attr,omitempty"`
-	URI    string  `xml:",cdata"`
+	Offset string
+	URI    string `xml:",cdata"`
 }
 
 // StaticResource is the URL to a static file, such as an image or SWF file
