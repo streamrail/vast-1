@@ -4,11 +4,13 @@ package vast
 import (
 	"bytes"
 	"encoding/xml"
+	"github.com/pkg/errors"
 	"strings"
 )
 
 // MarshalXML is a custom XML marshalling method, with some fixes on top of the native encoding/xml package
 func (v *VAST) MarshalXML() ([]byte, error) {
+	v.formatVastStrings()
 	data, err := xml.Marshal(v)
 	if err != nil {
 		return nil, err
@@ -21,6 +23,56 @@ func (v *VAST) MarshalXML() ([]byte, error) {
 	strXML = strings.Replace(strXML, "\t", "", -1)
 	strXML = strings.TrimSpace(strXML)
 	return []byte(strXML), nil
+}
+
+func (v *VAST) GetMediaFile() (*MediaFile, string) {
+	if len(v.Ads) == 0 {
+		return nil, ""
+	}
+	for _, ad := range v.Ads {
+		if ad.InLine == nil {
+			return nil, ""
+		}
+		inline := ad.InLine
+		for _, creative := range inline.Creatives {
+			if creative.Linear != nil {
+				linear := creative.Linear
+				for i := range linear.MediaFiles {
+					return &linear.MediaFiles[i], linear.Duration
+				}
+			}
+		}
+	}
+	return nil, ""
+}
+
+func (v *VAST) GetClickTroughURL() string {
+	if len(v.Ads) == 0 {
+		return ""
+	}
+	for _, ad := range v.Ads {
+		if ad.InLine == nil {
+			continue
+		}
+		inline := ad.InLine
+		for _, creative := range inline.Creatives {
+			linear := creative.Linear
+			if linear == nil {
+				continue
+			}
+			vc := linear.VideoClicks
+			if vc == nil {
+				continue
+			}
+			clickThrough := vc.ClickThroughs
+			for _, ct := range clickThrough {
+				if uri := ct.URI; uri != "" {
+					return uri
+				}
+			}
+		}
+	}
+	return ""
 }
 
 // FromXML is a custom XML unmarshalling method, with some fixes on top of the native encoding/xml package
@@ -47,6 +99,9 @@ type VAST struct {
 	// Contains a URI to a tracking resource that the video player should request
 	// upon receiving a “no ad” response
 	Errors []string `xml:"Error"`
+	// Defaults for media file's width/height attributes in case they're "0" or empty
+	mediaFileDefaultWidth  int
+	mediaFileDefaultHeight int
 }
 
 // Ad represent an <Ad> child tag in a VAST document
@@ -562,4 +617,103 @@ type CompanionClickThrough struct {
 type CompanionClickTracking struct {
 	// URL to a static file, such as an image or SWF file
 	URI string `xml:",cdata"`
+}
+
+func (v *VAST) GetDuration() (string, error) {
+	ads := v.Ads
+	if len(ads) == 0 {
+		return "", errors.New("no Ads in Vast")
+	}
+	inline := ads[0].InLine
+	if inline == nil {
+		return "", errors.New("no Inline in Vast")
+	}
+	creatives := inline.Creatives
+	if len(creatives) == 0 {
+		return "", errors.New("no Creatives in Vast")
+	}
+	linear := creatives[0].Linear
+	if linear == nil {
+		return "", errors.New("no Linear object in first creative")
+	}
+	return linear.Duration, nil
+}
+
+func formatVastString(url string) string {
+	return strings.TrimSpace(url)
+}
+
+func (v *VAST) SetMediaFileDefaultSize(mediaFileDefaultHeight, mediaFileDefaultWidth int) {
+	v.mediaFileDefaultHeight = mediaFileDefaultHeight
+	v.mediaFileDefaultWidth = mediaFileDefaultWidth
+}
+
+func (mf *MediaFile) fixMediaFileAttrs(mediaFileDefaultHeight, mediaFileDefaultWidth int) {
+	if mf.Height == 0 || mf.Width == 0 {
+		mf.Height = mediaFileDefaultHeight
+		mf.Width = mediaFileDefaultWidth
+	}
+}
+
+func (v *VAST) formatVastStrings() {
+	if len(v.Ads) == 0 {
+		return
+	}
+
+	for _, ad := range v.Ads {
+		if ad.InLine == nil {
+			return
+		}
+		inline := ad.InLine
+		if inline.AdSystem != nil {
+			ad.InLine.AdSystem.Name = formatVastString(inline.AdSystem.Name)
+		}
+		if inline.AdTitle != nil {
+			inline.AdTitle.Name = formatVastString(inline.AdTitle.Name)
+		}
+		for i := range inline.Impressions {
+			imp := &inline.Impressions[i]
+			imp.URI = formatVastString(imp.URI)
+		}
+		for _, creative := range ad.InLine.Creatives {
+			if creative.Linear != nil {
+				linear := creative.Linear
+				for i := range linear.TrackingEvents {
+					track := &linear.TrackingEvents[i]
+					track.URI = formatVastString(track.URI)
+				}
+				if linear.VideoClicks != nil {
+					for i := range linear.VideoClicks.ClickThroughs {
+						click := &linear.VideoClicks.ClickThroughs[i]
+						click.URI = formatVastString(click.URI)
+					}
+					for i := range linear.VideoClicks.ClickTrackings {
+						click := &linear.VideoClicks.ClickTrackings[i]
+						click.URI = formatVastString(click.URI)
+					}
+
+					for i := range linear.VideoClicks.ClickTrackings {
+						click := &linear.VideoClicks.ClickTrackings[i]
+						click.URI = formatVastString(click.URI)
+					}
+				}
+				for i := range linear.MediaFiles {
+					media := &linear.MediaFiles[i]
+					media.fixMediaFileAttrs(v.mediaFileDefaultHeight, v.mediaFileDefaultWidth)
+					media.URI = formatVastString(media.URI)
+				}
+			}
+			if creative.NonLinearAds != nil {
+				nonLinears := creative.NonLinearAds
+				for i := range nonLinears.TrackingEvents {
+					track := &nonLinears.TrackingEvents[i]
+					track.URI = formatVastString(track.URI)
+				}
+			}
+		}
+		for i := range inline.Error {
+			err := &inline.Error[i]
+			err.URI = formatVastString(err.URI)
+		}
+	}
 }
