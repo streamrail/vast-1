@@ -102,7 +102,7 @@ func (v *VAST) RemovePixels() {
 	}
 }
 
-func (v *VAST) getCreativeType() string {
+func (v *VAST) GetCreativeType() string {
 	ads := v.Ads
 	if len(ads) == 0 {
 		return ""
