@@ -102,7 +102,7 @@ func (v *VAST) RemovePixels() {
 	}
 }
 
-func (v *VAST) GetCreativeType() (string, error) {
+func (v *VAST) GetVastType() (string, error) {
 	ads := v.Ads
 	if len(ads) == 0 {
 		return "", errors.New("empty Ads attribute")
