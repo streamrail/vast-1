@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	WrapperCreativeType = "W"
-	VastCreativeType    = "V"
-	VpaidCreativeType   = "VP"
+	WrapperCreativeType = "w"
+	VastCreativeType    = "v"
+	VpaidCreativeType   = "vp"
 )
 
 // MarshalXML is a custom XML marshalling method, with some fixes on top of the native encoding/xml package
