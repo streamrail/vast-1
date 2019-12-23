@@ -102,28 +102,28 @@ func (v *VAST) RemovePixels() {
 	}
 }
 
-func (v *VAST) GetCreativeType() string {
+func (v *VAST) GetCreativeType() (string, error) {
 	ads := v.Ads
 	if len(ads) == 0 {
-		return ""
+		return "", errors.New("empty Ads attribute")
 	}
 	ad := ads[0]
 
 	if wrapper := ad.Wrapper; wrapper != nil && wrapper.VASTAdTagURI != "" {
-		return WrapperCreativeType
+		return WrapperCreativeType, nil
 	}
 	inLine := ad.InLine
 	if inLine == nil {
-		return ""
+		return "", errors.New("empty InLine attribute")
 	}
 	creatives := inLine.Creatives
 	if len(creatives) == 0 {
-		return ""
+		return "", errors.New("empty Creative attribute")
 	}
 	if creatives[0].APIFramework == "" {
-		return VastCreativeType
+		return VastCreativeType, nil
 	}
-	return VpaidCreativeType
+	return VpaidCreativeType, nil
 }
 
 // FromXML is a custom XML unmarshalling method, with some fixes on top of the native encoding/xml package
