@@ -120,7 +120,15 @@ func (v *VAST) GetVastType() (string, error) {
 	if len(creatives) == 0 {
 		return "", errors.New("empty Creative attribute")
 	}
-	if creatives[0].APIFramework == "" {
+	linear := creatives[0].Linear
+	if linear == nil {
+		return "", errors.New("empty Linear attribute")
+	}
+	mediafiles := linear.MediaFiles
+	if len(mediafiles) == 0 {
+		return "", errors.New("empty MediaFiles attribute")
+	}
+	if mediafiles[0].APIFramework == "" {
 		return VastCreativeType, nil
 	}
 	return VpaidCreativeType, nil
