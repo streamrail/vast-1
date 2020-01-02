@@ -128,10 +128,10 @@ func (v *VAST) GetVastType() (string, error) {
 	if len(mediafiles) == 0 {
 		return "", errors.New("empty MediaFiles attribute")
 	}
-	if mediafiles[0].APIFramework == "" {
-		return VastCreativeType, nil
+	if strings.EqualFold(mediafiles[0].APIFramework, "VPAID") {
+		return VpaidCreativeType, nil
 	}
-	return VpaidCreativeType, nil
+	return VastCreativeType, nil
 }
 
 // FromXML is a custom XML unmarshalling method, with some fixes on top of the native encoding/xml package
