@@ -258,11 +258,11 @@ func (ad *Ad) AddCompanionClickTrackings(CompanionClickTrackings ...*CompanionCl
 				if len(cAdsClickTrackings) == 0 {
 					cAdsClickTrackings = []string{}
 				}
-				CompanionClickTrackingStrings := make([]string, 0, len(CompanionClickTrackings))
-				for i, companionClickTracking := range CompanionClickTrackings {
-					CompanionClickTrackingStrings[i] = companionClickTracking.URI
+				companionClickTrackingStrings := make([]string, 0, len(CompanionClickTrackings))
+				for _, companionClickTracking := range CompanionClickTrackings {
+					companionClickTrackingStrings = append(companionClickTrackingStrings, companionClickTracking.URI)
 				}
-				cAdsClickTrackings = append(cAdsClickTrackings, CompanionClickTrackingStrings...)
+				cAdsClickTrackings = append(cAdsClickTrackings, companionClickTrackingStrings...)
 				cAd.CompanionClickTracking = cAdsClickTrackings
 			}
 		}
