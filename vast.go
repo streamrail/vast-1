@@ -4,8 +4,9 @@ package vast
 import (
 	"bytes"
 	"encoding/xml"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -109,7 +110,7 @@ func (v *VAST) GetVastType() (string, error) {
 	}
 	ad := ads[0]
 
-	if wrapper := ad.Wrapper; wrapper != nil && wrapper.VASTAdTagURI != "" {
+	if wrapper := ad.Wrapper; wrapper != nil && wrapper.VASTAdTagURI.CDATA != "" {
 		return WrapperCreativeType, nil
 	}
 	inLine := ad.InLine
@@ -175,6 +176,11 @@ type Ad struct {
 	Sequence int      `xml:"sequence,attr,omitempty"`
 	InLine   *InLine  `xml:",omitempty"`
 	Wrapper  *Wrapper `xml:",omitempty"`
+}
+
+// CDATAString ...
+type CDATAString struct {
+	CDATA string `xml:",cdata"`
 }
 
 // InLine is a vast <InLine> ad element containing actual ad definition
@@ -260,7 +266,7 @@ type Wrapper struct {
 	// The name of the ad server that returned the ad
 	AdSystem *AdSystem
 	// URL of ad tag of downstream Secondary Ad Server
-	VASTAdTagURI string
+	VASTAdTagURI CDATAString
 	// One or more URIs that directs the video player to a tracking resource file that the
 	// video player should request when the first frame of the ad is displayed
 	Impressions []Impression `xml:"Impression"`
