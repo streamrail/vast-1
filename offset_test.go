@@ -7,16 +7,16 @@ import (
 )
 
 func TestOffsetMarshaler(t *testing.T) {
-	b, err := Offset{}.MarshalText()
+	b, err := (&Offset{}).MarshalText()
 	if assert.NoError(t, err) {
 		assert.Equal(t, "0%", string(b))
 	}
-	b, err = Offset{Percent: .1}.MarshalText()
+	b, err = (&Offset{Percent: .1}).MarshalText()
 	if assert.NoError(t, err) {
 		assert.Equal(t, "10%", string(b))
 	}
 	d := Duration(0)
-	b, err = Offset{Duration: &d}.MarshalText()
+	b, err = (&Offset{Duration: &d}).MarshalText()
 	if assert.NoError(t, err) {
 		assert.Equal(t, "00:00:00", string(b))
 	}

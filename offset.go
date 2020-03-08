@@ -15,7 +15,10 @@ type Offset struct {
 }
 
 // MarshalText implements the encoding.TextMarshaler interface.
-func (o Offset) MarshalText() ([]byte, error) {
+func (o *Offset) MarshalText() ([]byte, error) {
+	if o == nil {
+		return []byte("0%"), nil
+	}
 	if o.Duration != nil {
 		return o.Duration.MarshalText()
 	}
