@@ -788,6 +788,12 @@ func (v *VAST) formatVastStrings() {
 		if inline.Description != "" {
 			inline.Description = formatVastString(inline.Description)
 		}
+		if inline.Extensions != nil {
+			for i := range inline.Extensions.Extensions {
+				extension := &inline.Extensions.Extensions[i]
+				extension.Data = bytes.TrimSpace(extension.Data)
+			}
+		}
 		for i := range inline.Impressions {
 			imp := &inline.Impressions[i]
 			imp.URI = formatVastString(imp.URI)
@@ -807,6 +813,9 @@ func (v *VAST) formatVastStrings() {
 func (v *VAST) formatCreativeLinear(linear *Linear) {
 	if linear == nil {
 		return
+	}
+	if linear.AdParameters != nil {
+		linear.AdParameters.Parameters = bytes.TrimSpace(linear.AdParameters.Parameters)
 	}
 	for i := range linear.TrackingEvents {
 		track := &linear.TrackingEvents[i]
@@ -841,6 +850,11 @@ func (v *VAST) formatCreativeCompanionAds(companionAds *CompanionAds) {
 	for i := range companionAds.Companions {
 		companion := &companionAds.Companions[i]
 		companion.CompanionClickThrough.URI = formatVastString(companion.CompanionClickThrough.URI)
+		companion.StaticResource.URI = formatVastString(companion.StaticResource.URI)
+		for j := range companion.TrackingEvents {
+			track := &companion.TrackingEvents[j]
+			track.URI = formatVastString(track.URI)
+		}
 		for _, click := range companion.CompanionClickTracking {
 			click.URI = formatVastString(click.URI)
 		}
