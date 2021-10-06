@@ -782,6 +782,9 @@ func (v *VAST) formatVastStrings() {
 		if inline.AdTitle != nil {
 			inline.AdTitle.Name = formatVastString(inline.AdTitle.Name)
 		}
+		if inline.Pricing != "" {
+			inline.Pricing = formatVastString(inline.Pricing)
+		}
 		for i := range inline.Impressions {
 			imp := &inline.Impressions[i]
 			imp.URI = formatVastString(imp.URI)
