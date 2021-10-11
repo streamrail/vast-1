@@ -782,49 +782,95 @@ func (v *VAST) formatVastStrings() {
 		if inline.AdTitle != nil {
 			inline.AdTitle.Name = formatVastString(inline.AdTitle.Name)
 		}
+		if inline.Pricing != "" {
+			inline.Pricing = formatVastString(inline.Pricing)
+		}
+		if inline.Description != "" {
+			inline.Description = formatVastString(inline.Description)
+		}
+		if inline.Extensions != nil {
+			for i := range inline.Extensions.Extensions {
+				extension := &inline.Extensions.Extensions[i]
+				extension.Data = bytes.TrimSpace(extension.Data)
+			}
+		}
 		for i := range inline.Impressions {
 			imp := &inline.Impressions[i]
 			imp.URI = formatVastString(imp.URI)
 		}
 		for _, creative := range ad.InLine.Creatives {
-			if creative.Linear != nil {
-				linear := creative.Linear
-				for i := range linear.TrackingEvents {
-					track := &linear.TrackingEvents[i]
-					track.URI = formatVastString(track.URI)
-				}
-				if linear.VideoClicks != nil {
-					for i := range linear.VideoClicks.ClickThroughs {
-						click := &linear.VideoClicks.ClickThroughs[i]
-						click.URI = formatVastString(click.URI)
-					}
-					for i := range linear.VideoClicks.ClickTrackings {
-						click := &linear.VideoClicks.ClickTrackings[i]
-						click.URI = formatVastString(click.URI)
-					}
-
-					for i := range linear.VideoClicks.ClickTrackings {
-						click := &linear.VideoClicks.ClickTrackings[i]
-						click.URI = formatVastString(click.URI)
-					}
-				}
-				for i := range linear.MediaFiles {
-					media := &linear.MediaFiles[i]
-					media.fixMediaFileAttrs(v.mediaFileDefaultHeight, v.mediaFileDefaultWidth)
-					media.URI = formatVastString(media.URI)
-				}
-			}
-			if creative.NonLinearAds != nil {
-				nonLinears := creative.NonLinearAds
-				for i := range nonLinears.TrackingEvents {
-					track := &nonLinears.TrackingEvents[i]
-					track.URI = formatVastString(track.URI)
-				}
-			}
+			v.formatCreativeLinear(creative.Linear)
+			v.formatCreativeCompanionAds(creative.CompanionAds)
+			v.formatCreativeNonLinearAds(creative.NonLinearAds)
 		}
 		for i := range inline.Error {
 			err := &inline.Error[i]
 			err.URI = formatVastString(err.URI)
 		}
+	}
+}
+
+func (v *VAST) formatCreativeLinear(linear *Linear) {
+	if linear == nil {
+		return
+	}
+	if linear.AdParameters != nil {
+		linear.AdParameters.Parameters = bytes.TrimSpace(linear.AdParameters.Parameters)
+	}
+	for i := range linear.TrackingEvents {
+		track := &linear.TrackingEvents[i]
+		track.URI = formatVastString(track.URI)
+	}
+	if linear.VideoClicks != nil {
+		for i := range linear.VideoClicks.ClickThroughs {
+			click := &linear.VideoClicks.ClickThroughs[i]
+			click.URI = formatVastString(click.URI)
+		}
+		for i := range linear.VideoClicks.ClickTrackings {
+			click := &linear.VideoClicks.ClickTrackings[i]
+			click.URI = formatVastString(click.URI)
+		}
+
+		for i := range linear.VideoClicks.ClickTrackings {
+			click := &linear.VideoClicks.ClickTrackings[i]
+			click.URI = formatVastString(click.URI)
+		}
+	}
+	for i := range linear.MediaFiles {
+		media := &linear.MediaFiles[i]
+		media.fixMediaFileAttrs(v.mediaFileDefaultHeight, v.mediaFileDefaultWidth)
+		media.URI = formatVastString(media.URI)
+	}
+}
+
+func (v *VAST) formatCreativeCompanionAds(companionAds *CompanionAds) {
+	if companionAds == nil {
+		return
+	}
+	for i := range companionAds.Companions {
+		companion := &companionAds.Companions[i]
+		if companion.CompanionClickThrough != nil {
+			companion.CompanionClickThrough.URI = formatVastString(companion.CompanionClickThrough.URI)
+		}
+		if companion.StaticResource != nil {
+			companion.StaticResource.URI = formatVastString(companion.StaticResource.URI)
+		}
+		for j := range companion.TrackingEvents {
+			track := &companion.TrackingEvents[j]
+			track.URI = formatVastString(track.URI)
+		}
+		for _, click := range companion.CompanionClickTracking {
+			click.URI = formatVastString(click.URI)
+		}
+	}
+}
+
+func (v *VAST) formatCreativeNonLinearAds(nonLinearAds *NonLinearAds) {
+	if nonLinearAds == nil {
+		return
+	}
+	for i := range nonLinearAds.TrackingEvents {
+		track := &nonLinearAds.TrackingEvents[i]
+		track.URI = formatVastString(track.URI)
 	}
 }
