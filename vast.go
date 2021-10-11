@@ -849,8 +849,12 @@ func (v *VAST) formatCreativeCompanionAds(companionAds *CompanionAds) {
 	}
 	for i := range companionAds.Companions {
 		companion := &companionAds.Companions[i]
-		companion.CompanionClickThrough.URI = formatVastString(companion.CompanionClickThrough.URI)
-		companion.StaticResource.URI = formatVastString(companion.StaticResource.URI)
+		if companion.CompanionClickThrough != nil {
+			companion.CompanionClickThrough.URI = formatVastString(companion.CompanionClickThrough.URI)
+		}
+		if companion.StaticResource != nil {
+			companion.StaticResource.URI = formatVastString(companion.StaticResource.URI)
+		}
 		for j := range companion.TrackingEvents {
 			track := &companion.TrackingEvents[j]
 			track.URI = formatVastString(track.URI)
