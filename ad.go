@@ -99,11 +99,16 @@ func (ad *Ad) AddTrackingEvents(trackingEvents ...Tracking) {
 	if inline := ad.InLine; inline != nil {
 		for i := range inline.Creatives {
 			c := &inline.Creatives[i]
+
 			linear := c.Linear
-			if linear == nil {
-				continue
+			if linear != nil {
+				linear.TrackingEvents = append(linear.TrackingEvents, trackingEvents...)
 			}
-			linear.TrackingEvents = append(linear.TrackingEvents, trackingEvents...)
+
+			nonLinear := c.NonLinearAds
+			if nonLinear != nil {
+				nonLinear.TrackingEvents = append(nonLinear.TrackingEvents, trackingEvents...)
+			}
 		}
 	}
 	if wrapper := ad.Wrapper; wrapper != nil {
@@ -170,16 +175,28 @@ func (ad *Ad) AddClickTrackings(clickTrackings ...VideoClick) {
 	if inline := ad.InLine; inline != nil {
 		for i := range inline.Creatives {
 			c := &inline.Creatives[i]
+
 			linear := c.Linear
-			if linear == nil {
-				continue
+			if linear != nil {
+				videoClicks := linear.VideoClicks
+				if videoClicks == nil {
+					videoClicks = &VideoClicks{}
+					linear.VideoClicks = videoClicks
+				}
+				videoClicks.ClickTrackings = append(videoClicks.ClickTrackings, clickTrackings...)
 			}
-			videoClicks := linear.VideoClicks
-			if videoClicks == nil {
-				videoClicks = &VideoClicks{}
-				linear.VideoClicks = videoClicks
+
+			nonLinear := c.NonLinearAds
+			if nonLinear != nil {
+				clickTrackingURLs := make([]string, 0, len(clickTrackings))
+				for _, url := range clickTrackings {
+					clickTrackingURLs = append(clickTrackingURLs, url.URI)
+				}
+
+				for _, nonLinearAd := range nonLinear.NonLinears {
+					nonLinearAd.NonLinearClickTracking = append(nonLinearAd.NonLinearClickTracking, clickTrackingURLs...)
+				}
 			}
-			videoClicks.ClickTrackings = append(videoClicks.ClickTrackings, clickTrackings...)
 		}
 	}
 	if wrapper := ad.Wrapper; wrapper != nil {
