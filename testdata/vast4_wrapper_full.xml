@@ -1,0 +1,29 @@
+<VAST version="4.1">
+	<Ad id="w-1" sequence="2">
+		<Wrapper followAdditionalWrappers="false" allowMultipleAds="true" fallbackOnNoAd="1">
+			<AdSystem>DSP</AdSystem>
+			<Error><![CDATA[https://dsp.example/werr]]></Error>
+			<Impression><![CDATA[https://dsp.example/wimp]]></Impression>
+			<Pricing model="cpm" currency="EUR"><![CDATA[2.5]]></Pricing>
+			<ViewableImpression><Viewable><![CDATA[https://dsp.example/wview]]></Viewable></ViewableImpression>
+			<AdVerifications>
+				<Verification vendor="other.com-omid">
+					<JavaScriptResource apiFramework="omid" browserOptional="false"><![CDATA[https://o.example/v.js]]></JavaScriptResource>
+				</Verification>
+			</AdVerifications>
+			<BlockedAdCategories authority="https://iabtechlab.com/categoryauthority">IAB25</BlockedAdCategories>
+			<BlockedAdCategories authority="https://iabtechlab.com/categoryauthority">IAB26</BlockedAdCategories>
+			<Creatives>
+				<Creative adId="w-adid">
+					<UniversalAdId idRegistry="clearcast.co.uk">CC-1</UniversalAdId>
+					<Linear>
+						<TrackingEvents>
+							<Tracking event="complete"><![CDATA[https://dsp.example/wcomplete]]></Tracking>
+						</TrackingEvents>
+					</Linear>
+				</Creative>
+			</Creatives>
+			<VASTAdTagURI><![CDATA[https://dsp.example/vast?a=1&b=2]]></VASTAdTagURI>
+		</Wrapper>
+	</Ad>
+</VAST>

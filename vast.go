@@ -135,7 +135,8 @@ func (v *VAST) GetVastType() (string, error) {
 	return VastCreativeType, nil
 }
 
-// FromXML is a custom XML unmarshalling method, with some fixes on top of the native encoding/xml package
+// FromXML is a custom XML unmarshalling method, with some fixes on top of the native encoding/xml package.
+// It removes every newline and tab (also inside CDATA) and drops the VAST 4 fields; use FromXMLFull to keep them.
 func FromXML(xmlStr []byte) (*VAST, error) {
 	xmlStr = bytes.Replace(xmlStr, []byte("\n"), []byte(""), -1)
 	xmlStr = bytes.Replace(xmlStr, []byte("\t"), []byte(""), -1)
@@ -143,6 +144,7 @@ func FromXML(xmlStr []byte) (*VAST, error) {
 	if err := xml.Unmarshal(xmlStr, &v); err != nil {
 		return nil, err
 	}
+	v.stripVAST4()
 	return &v, nil
 }
 
@@ -173,9 +175,13 @@ type Ad struct {
 	// A number greater than zero (0) that identifies the sequence in which
 	// an ad should play; all <Ad> elements with sequence values are part of
 	// a pod and are intended to be played in sequence
-	Sequence int      `xml:"sequence,attr,omitempty"`
-	InLine   *InLine  `xml:",omitempty"`
-	Wrapper  *Wrapper `xml:",omitempty"`
+	Sequence int `xml:"sequence,attr,omitempty"`
+	// VAST 4: "video", "audio" or "hybrid". Kept by FromXMLFull only.
+	AdType string `xml:"adType,attr,omitempty"`
+	// VAST 4.1, kept verbatim. Kept by FromXMLFull only.
+	ConditionalAd string   `xml:"conditionalAd,attr,omitempty"`
+	InLine        *InLine  `xml:",omitempty"`
+	Wrapper       *Wrapper `xml:",omitempty"`
 }
 
 // CDATAString ...
@@ -193,10 +199,16 @@ type InLine struct {
 	AdSystem *AdSystem
 	// The common name of the ad
 	AdTitle *AdTitle
+	// VAST 4 identifier of this ad serving instance. Kept by FromXMLFull only.
+	AdServingID string `xml:"AdServingId,omitempty"`
+	// VAST 4 ad categories. Kept by FromXMLFull only.
+	Categories []Category `xml:"Category,omitempty"`
 
 	// One or more URIs that directs the video player to a tracking resource file that the
 	// video player should request when the first frame of the ad is displayed
 	Impressions []Impression `xml:"Impression"`
+	// VAST 4 viewability trackers. Kept by FromXMLFull only.
+	ViewableImpression *ViewableImpression `xml:",omitempty"`
 	// The container for one or more <Creative> elements
 	Creatives []Creative `xml:"Creatives>Creative"`
 	// A string value that provides a longer description of the ad.
@@ -220,7 +232,10 @@ type InLine struct {
 	// Provides a value that represents a price that can be used by real-time bidding
 	// (RTB) systems. VAST is not designed to handle RTB since other methods exist,
 	// but this element is offered for custom solutions if needed.
-	Pricing string `xml:",omitempty"`
+	// FromXML keeps only the value; FromXMLFull also keeps model and currency.
+	Pricing *Pricing `xml:",omitempty"`
+	// VAST 4 cache lifetime in seconds, kept verbatim. Kept by FromXMLFull only.
+	Expires string `xml:",omitempty"`
 	// XML node for custom extensions, as defined by the ad server. When used, a
 	// custom element should be nested under <Extensions> to help separate custom
 	// XML elements from VAST elements. The following example includes a custom
@@ -245,10 +260,10 @@ type Impression struct {
 // exist,  but this element is offered for custom solutions if needed.
 type Pricing struct {
 	// Identifies the pricing model as one of "cpm", "cpc", "cpe" or "cpv".
-	Model string `xml:"model,attr"`
+	Model string `xml:"model,attr,omitempty"`
 	// The 3 letter ISO-4217 currency symbol that identifies the currency of
 	// the value provided
-	Currency string `xml:"currency,attr"`
+	Currency string `xml:"currency,attr,omitempty"`
 	// If the value provided is to be obfuscated/encoded, publishers and advertisers
 	// must negotiate the appropriate mechanism to do so. When included as part of
 	// a VAST Wrapper in a chain of Wrappers, only the value offered in the first
@@ -263,6 +278,10 @@ type Pricing struct {
 // the ad supply chain must contain all the necessary files needed to display
 // the ad.
 type Wrapper struct {
+	// VAST 4 wrapper attributes, kept verbatim. Kept by FromXMLFull only.
+	FollowAdditionalWrappers string `xml:"followAdditionalWrappers,attr,omitempty"`
+	AllowMultipleAds         string `xml:"allowMultipleAds,attr,omitempty"`
+	FallbackOnNoAd           string `xml:"fallbackOnNoAd,attr,omitempty"`
 	// The name of the ad server that returned the ad
 	AdSystem *AdSystem
 	// URL of ad tag of downstream Secondary Ad Server
@@ -273,6 +292,10 @@ type Wrapper struct {
 	// A URI representing an error-tracking pixel; this element can occur multiple
 	// times.
 	Error []Error `xml:",omitempty"`
+	// Kept by FromXMLFull only.
+	Pricing *Pricing `xml:",omitempty"`
+	// VAST 4 viewability trackers. Kept by FromXMLFull only.
+	ViewableImpression *ViewableImpression `xml:",omitempty"`
 	// The container for one or more <Creative> elements
 	Creatives []CreativeWrapper `xml:"Creatives>Creative"`
 	// XML node for custom extensions, as defined by the ad server. When used, a
@@ -281,6 +304,8 @@ type Wrapper struct {
 	// xml element within the Extensions element.
 	Extensions      *Extensions      `xml:",omitempty"`
 	AdVerifications *AdVerifications `xml:",omitempty"`
+	// VAST 4.1 categories the downstream ad must not have. Kept by FromXMLFull only.
+	BlockedAdCategories []Category `xml:",omitempty"`
 }
 
 // AdSystem contains information about the system that returned the ad
@@ -301,14 +326,20 @@ type Creative struct {
 	Sequence int `xml:"sequence,attr,omitempty"`
 	// Identifies the ad with which the creative is served
 	AdID string `xml:"AdID,attr,omitempty"`
+	// The spec's adId attribute (AdID above matches the non-standard "AdID"). Kept by FromXMLFull only.
+	SpecAdID string `xml:"adId,attr,omitempty"`
 	// The technology used for any included API
 	APIFramework string `xml:"apiFramework,attr,omitempty"`
+	// VAST 4 creative identifiers. Kept by FromXMLFull only.
+	UniversalAdIDs []UniversalAdID `xml:"UniversalAdId,omitempty"`
 	// If present, defines a linear creative
 	Linear *Linear `xml:",omitempty"`
 	// If defined, defins companions creatives
 	CompanionAds *CompanionAds `xml:",omitempty"`
 	// If defined, defins non linear creatives
 	NonLinearAds *NonLinearAds `xml:",omitempty"`
+	// VAST 4 creative-level extensions. Kept by FromXMLFull only.
+	CreativeExtensions *CreativeExtensions `xml:",omitempty"`
 }
 
 // CompanionAds contains companions creatives
@@ -335,12 +366,18 @@ type CreativeWrapper struct {
 	Sequence int `xml:"sequence,attr,omitempty"`
 	// Identifies the ad with which the creative is served
 	AdID string `xml:"AdID,attr,omitempty"`
+	// The spec's adId attribute. Kept by FromXMLFull only.
+	SpecAdID string `xml:"adId,attr,omitempty"`
+	// VAST 4 creative identifiers. Kept by FromXMLFull only.
+	UniversalAdIDs []UniversalAdID `xml:"UniversalAdId,omitempty"`
 	// If present, defines a linear creative
 	Linear *LinearWrapper `xml:",omitempty"`
 	// If defined, defins companions creatives
 	CompanionAds *CompanionAdsWrapper `xml:"CompanionAds,omitempty"`
 	// If defined, defines non linear creatives
 	NonLinearAds *NonLinearAdsWrapper `xml:"NonLinearAds,omitempty"`
+	// VAST 4 creative-level extensions. Kept by FromXMLFull only.
+	CreativeExtensions *CreativeExtensions `xml:",omitempty"`
 }
 
 // CompanionAdsWrapper contains companions creatives in a wrapper
@@ -376,13 +413,17 @@ type Linear struct {
 	// begins playing.
 	SkipOffset *Offset `xml:"skipoffset,attr,omitempty"`
 	// Duration in standard time format, hh:mm:ss
-	Duration           string
-	AdParameters       *AdParameters `xml:",omitempty"`
-	Icons              []Icon
-	TrackingEvents     []Tracking          `xml:"TrackingEvents>Tracking,omitempty"`
-	VideoClicks        *VideoClicks        `xml:",omitempty"`
-	MediaFiles         []MediaFile         `xml:"MediaFiles>MediaFile,omitempty"`
-	CreativeExtensions *CreativeExtensions `xml:",omitempty"`
+	Duration       string
+	AdParameters   *AdParameters `xml:",omitempty"`
+	Icons          []Icon
+	TrackingEvents []Tracking   `xml:"TrackingEvents>Tracking,omitempty"`
+	VideoClicks    *VideoClicks `xml:",omitempty"`
+	MediaFiles     []MediaFile  `xml:"MediaFiles>MediaFile,omitempty"`
+	// VAST 4 MediaFiles children. Kept by FromXMLFull only.
+	Mezzanines               []Mezzanine               `xml:"MediaFiles>Mezzanine,omitempty"`
+	InteractiveCreativeFiles []InteractiveCreativeFile `xml:"MediaFiles>InteractiveCreativeFile,omitempty"`
+	ClosedCaptionFiles       *ClosedCaptionFiles       `xml:"MediaFiles>ClosedCaptionFiles,omitempty"`
+	CreativeExtensions       *CreativeExtensions       `xml:",omitempty"`
 }
 
 // LinearWrapper defines a wrapped linear creative
@@ -599,6 +640,8 @@ type HTMLResource struct {
 	// Specifies whether the HTML is XML-encoded
 	XMLEncoded bool   `xml:"xmlEncoded,attr,omitempty"`
 	HTML       []byte `xml:",cdata"`
+	// set by FromXMLFull: write XML-encoded content back as escaped text instead of CDATA
+	keepEncoding bool
 }
 
 // AdParameters defines arbitrary ad parameters
@@ -606,6 +649,8 @@ type AdParameters struct {
 	// Specifies whether the parameters are XML-encoded
 	XMLEncoded bool   `xml:"xmlEncoded,attr,omitempty"`
 	Parameters []byte `xml:",cdata"`
+	// set by FromXMLFull: write XML-encoded content back as escaped text instead of CDATA
+	keepEncoding bool
 }
 
 // VideoClicks contains types of video clicks
@@ -656,7 +701,65 @@ type MediaFile struct {
 	// (for Flash/Flex), “initParams” (for Silverlight) and “GetVariables” (variables
 	// placed in key/value pairs on the asset request).
 	APIFramework string `xml:"apiFramework,attr,omitempty"`
-	URI          string `xml:",cdata"`
+	// VAST 4 attributes, kept verbatim. Kept by FromXMLFull only.
+	FileSize  string `xml:"fileSize,attr,omitempty"`
+	MediaType string `xml:"mediaType,attr,omitempty"`
+	URI       string `xml:",cdata"`
+}
+
+// Mezzanine is the VAST 4 high quality source file used for transcoding (SSAI).
+type Mezzanine struct {
+	ID        string `xml:"id,attr,omitempty"`
+	Delivery  string `xml:"delivery,attr,omitempty"`
+	Type      string `xml:"type,attr,omitempty"`
+	Width     string `xml:"width,attr,omitempty"`
+	Height    string `xml:"height,attr,omitempty"`
+	Codec     string `xml:"codec,attr,omitempty"`
+	FileSize  string `xml:"fileSize,attr,omitempty"`
+	MediaType string `xml:"mediaType,attr,omitempty"`
+	URI       string `xml:",cdata"`
+}
+
+// InteractiveCreativeFile is the VAST 4 interactive (e.g. SIMID) file for a linear creative.
+type InteractiveCreativeFile struct {
+	Type             string `xml:"type,attr,omitempty"`
+	APIFramework     string `xml:"apiFramework,attr,omitempty"`
+	VariableDuration string `xml:"variableDuration,attr,omitempty"`
+	URI              string `xml:",cdata"`
+}
+
+// ClosedCaptionFiles is the VAST 4.1 container of caption files.
+type ClosedCaptionFiles struct {
+	Files []ClosedCaptionFile `xml:"ClosedCaptionFile,omitempty"`
+}
+
+// ClosedCaptionFile is a caption file for a linear creative.
+type ClosedCaptionFile struct {
+	Type     string `xml:"type,attr,omitempty"`
+	Language string `xml:"language,attr,omitempty"`
+	URI      string `xml:",cdata"`
+}
+
+// UniversalAdID identifies a creative across systems (required in VAST 4).
+type UniversalAdID struct {
+	IDRegistry string `xml:"idRegistry,attr,omitempty"`
+	// VAST 4.0 only; 4.1 moved the value into the element.
+	IDValue string `xml:"idValue,attr,omitempty"`
+	Value   string `xml:",chardata"`
+}
+
+// Category is a VAST 4 ad category, used by InLine Category and Wrapper BlockedAdCategories.
+type Category struct {
+	Authority string `xml:"authority,attr,omitempty"`
+	Value     string `xml:",chardata"`
+}
+
+// ViewableImpression holds the VAST 4 viewability trackers.
+type ViewableImpression struct {
+	ID               string        `xml:"id,attr,omitempty"`
+	Viewable         []CDATAString `xml:"Viewable,omitempty"`
+	NotViewable      []CDATAString `xml:"NotViewable,omitempty"`
+	ViewUndetermined []CDATAString `xml:"ViewUndetermined,omitempty"`
 }
 
 // Extensions defines extensions
@@ -685,7 +788,7 @@ type CompanionClickTracking struct {
 	URI string `xml:",cdata"`
 }
 
-//The <AdVerifications> element contains one or more <Verification> elements, which list the resources and metadata
+// The <AdVerifications> element contains one or more <Verification> elements, which list the resources and metadata
 // required to execute third-party measurement code in order to verify creative playback.
 type AdVerifications struct {
 	AdVerifications []Verification `xml:"Verification,omitempty"`
@@ -694,9 +797,10 @@ type AdVerifications struct {
 // The <Verification> element contains the executable and bootstrapping data required to run the measurement code for
 // a single verification vendor.
 type Verification struct {
-	Vendor                 string                  `xml:"vendor,attr"`
-	JavaScriptResource     *JavaScriptResource     `xml:",omitempty"`
-	ExecutableResource     *ExecutableResource     `xml:",omitempty"`
+	Vendor string `xml:"vendor,attr"`
+	// VAST 4.1 allows several, e.g. a browser and an in-app script. FromXML keeps only the last one.
+	JavaScriptResources    []JavaScriptResource    `xml:"JavaScriptResource,omitempty"`
+	ExecutableResources    []ExecutableResource    `xml:"ExecutableResource,omitempty"`
 	TrackingEvents         []Tracking              `xml:"TrackingEvents>Tracking,omitempty"`
 	VerificationParameters *VerificationParameters `xml:",omitempty"`
 }
