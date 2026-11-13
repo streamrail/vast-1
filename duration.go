@@ -1,6 +1,7 @@
 package vast
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ func (dur Duration) MarshalText() ([]byte, error) {
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
 func (dur *Duration) UnmarshalText(data []byte) (err error) {
+	data = removeNewlinesAndTabs(data)
 	parts := strings.SplitN(string(data), ":", 3)
 	if len(parts) != 3 {
 		return fmt.Errorf("invalid duration: %s", data)
@@ -46,4 +48,14 @@ func (dur *Duration) UnmarshalText(data []byte) (err error) {
 		f *= 60
 	}
 	return nil
+}
+
+// removeNewlinesAndTabs mirrors what FromXML does to the whole document, so FromXMLFull accepts the
+// same duration and offset values.
+func removeNewlinesAndTabs(data []byte) []byte {
+	if !bytes.ContainsAny(data, "\n\t") {
+		return data
+	}
+
+	return bytes.ReplaceAll(bytes.ReplaceAll(data, []byte("\n"), nil), []byte("\t"), nil)
 }

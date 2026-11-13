@@ -27,6 +27,7 @@ func (o *Offset) MarshalText() ([]byte, error) {
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
 func (o *Offset) UnmarshalText(data []byte) error {
+	data = removeNewlinesAndTabs(data)
 	if strings.HasSuffix(string(data), "%") {
 		p, err := strconv.ParseInt(string(data[:len(data)-1]), 10, 8)
 		if err != nil {

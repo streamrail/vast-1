@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="4.2">
+  <Ad id="ad-1" adType="video" conditionalAd="false">
+    <InLine>
+      <AdSystem version="1">DSP</AdSystem>
+      <Error><![CDATA[https://dsp.example/err?c=[ERRORCODE]]]></Error>
+      <Impression id="dsp">
+        <![CDATA[https://dsp.example/imp]]>
+      </Impression>
+      <Pricing model="cpm" currency="USD">1.25</Pricing>
+      <ViewableImpression id="vi-1">
+        <Viewable><![CDATA[https://dsp.example/viewable]]></Viewable>
+        <NotViewable><![CDATA[https://dsp.example/notviewable]]></NotViewable>
+        <ViewUndetermined><![CDATA[https://dsp.example/undetermined]]></ViewUndetermined>
+      </ViewableImpression>
+      <AdServingId>serving-1</AdServingId>
+      <AdTitle>Title</AdTitle>
+      <AdVerifications>
+        <Verification vendor="vendor.com-omid">
+          <JavaScriptResource apiFramework="omid" browserOptional="true"><![CDATA[https://v.example/web.js]]></JavaScriptResource>
+          <JavaScriptResource apiFramework="omid" browserOptional="false"><![CDATA[https://v.example/app.js]]></JavaScriptResource>
+          <ExecutableResource apiFramework="ios" type="ios"><![CDATA[https://v.example/ios]]></ExecutableResource>
+          <TrackingEvents>
+            <Tracking event="verificationNotExecuted"><![CDATA[https://v.example/vne?r=[REASON]]]></Tracking>
+          </TrackingEvents>
+          <VerificationParameters><![CDATA[{"a":1}]]></VerificationParameters>
+        </Verification>
+      </AdVerifications>
+      <Advertiser>Advertiser Co</Advertiser>
+      <Category authority="https://iabtechlab.com/categoryauthority">IAB1</Category>
+      <Category authority="https://iabtechlab.com/categoryauthority">IAB1-1</Category>
+      <Creatives>
+        <Creative id="cr-1" sequence="1" adId="adid-1" apiFramework="SIMID">
+          <UniversalAdId idRegistry="ad-id.org">UAI-123</UniversalAdId>
+          <Linear skipoffset="00:00:05">
+            <Duration>00:00:15</Duration>
+            <AdParameters xmlEncoded="true">&lt;p&gt;
+	keep&lt;/p&gt;</AdParameters>
+            <TrackingEvents>
+              <Tracking event="start"><![CDATA[https://dsp.example/start]]></Tracking>
+              <Tracking event="progress" offset="00:00:10"><![CDATA[https://dsp.example/progress]]></Tracking>
+            </TrackingEvents>
+            <VideoClicks>
+              <ClickThrough id="ct"><![CDATA[https://adv.example]]></ClickThrough>
+              <ClickTracking><![CDATA[https://dsp.example/click]]></ClickTracking>
+            </VideoClicks>
+            <MediaFiles>
+              <MediaFile id="mf-1" delivery="progressive" type="video/mp4" width="640" height="360" bitrate="800" fileSize="1048576" mediaType="2D" codec="avc1"><![CDATA[https://cdn.example/a.mp4]]></MediaFile>
+              <Mezzanine id="mz-1" delivery="progressive" type="video/mp4" width="1920" height="1080" codec="avc1" fileSize="9999999" mediaType="2D"><![CDATA[https://cdn.example/m.mp4]]></Mezzanine>
+              <InteractiveCreativeFile type="text/html" apiFramework="SIMID" variableDuration="true"><![CDATA[https://cdn.example/simid.html]]></InteractiveCreativeFile>
+              <ClosedCaptionFiles>
+                <ClosedCaptionFile type="text/vtt" language="en"><![CDATA[https://cdn.example/cc-en.vtt]]></ClosedCaptionFile>
+                <ClosedCaptionFile type="application/ttml+xml" language="fr"><![CDATA[https://cdn.example/cc-fr.ttml]]></ClosedCaptionFile>
+              </ClosedCaptionFiles>
+            </MediaFiles>
+          </Linear>
+        </Creative>
+        <Creative id="cr-2">
+          <CompanionAds required="any">
+            <Companion width="300" height="250">
+              <StaticResource creativeType="image/png"><![CDATA[https://cdn.example/c.png]]></StaticResource>
+              <TrackingEvents>
+                <Tracking event="creativeView"><![CDATA[https://dsp.example/cv]]></Tracking>
+              </TrackingEvents>
+              <CompanionClickThrough><![CDATA[https://adv.example/companion]]></CompanionClickThrough>
+            </Companion>
+          </CompanionAds>
+        </Creative>
+      </Creatives>
+      <Description>Line one
+line two</Description>
+      <Expires>3600</Expires>
+      <Extensions>
+        <Extension type="js"><![CDATA[var a = 1; // comment
+var b = 2;]]></Extension>
+      </Extensions>
+    </InLine>
+  </Ad>
+</VAST>
